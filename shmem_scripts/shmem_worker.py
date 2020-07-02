@@ -44,36 +44,63 @@ HUTCHES = [
     'mec'
 ]
 
-parser = argparse.ArgumentParser()
-# First iteration, we require exprun
-parser.add_argument('--exprun', help='psana experiment/run string (e.g. exp=xppd7114:run=43)')
-parser.add_argument('--nevts', help='number of events, all events=0', default=-1, type=int)
-args = parser.parse_args()
+class ShmemWorker(object):
+    def __init__(self, exp_run=None, evnt_lim=50):
+        self._exp_run = exp_run
+        self._evnt_lim = evnt_lim
+        self._hutch = 'xcs'#exp_run[4:6]
+        self._run = int(exp_run.split('=')[-1])
+        #self._dsname = ''.join([exp_run, ':smd'])
+        self._dsname = 'shmem=psana.0:stop=no'
+        self._ds = psana.DataSource(self.dsname)
+        self._default_dets = defaultDetectors(self._hutch)
 
+    @property
+    def exp_run(self):
+        """Experiment/run string"""
+        return self._exp_run
 
-def get_exp_ds_info(exp_run):
-    """Parse the exp_run arg to get DataSource object,
-    hutch name and run number
-    """
-    if not exp_run:
-        raise ValueError('You have not provided an experiment/run')
-    
-    hutch = exp_run[4:6]
-    if hutch not in HUTCHES:
-        logger.debug('{0} is not in list of hutches, exiting'.format(hutch))
-        sys.exit()
+    @property
+    def evnt_lim(self):
+        """Number of events for worker to process"""
+        return self._evnt_lim
 
-    run = int(exp_run.split('=')[-1])
-    dsname = ''.join([exp_run, ':smd'])
+    @property
+    def hutch(self):
+        """Parse Hutch, check that it's a supported hutch"""
+        if self._hutch not in HUTCHES:
+            logger.debug('Hutch {0} is not supported'.format(self._hutch))
+        
+        return self._hutch
 
-    ds = psana.DataSource(dsname)
+    @property
+    def run(self):
+        """Get run number"""
+        return self._run
 
-    return ds, hutch, run
+    @property
+    def dsname(self):
+        """Generate data source name"""
+        return self._dsname
 
-def run_worker(ds, hutch, run, events):
-    """Worker should be incredibly light weight"""
-    default_dets = defaultDetectors(hutch)
-    logger.debug('Starting worker {0} with dets {1}'.format(rank, default_dets))
-    for evt_idx, evt in enumerate(ds.events()):
-        default_data = detData(default_dets, evt)
-        logger.debug('Got data {0}'.format(default_data))
+    @property
+    def ds(self):
+        """Instantiate DataSource object"""
+        return self._ds
+
+    @property
+    def default_dets(self):
+        """This is shared among workers, maybe pull out"""
+        return self._default_dets
+
+    def run_worker(self):
+        """Worker should be incredibly light weight"""
+        logger.debug('Starting worker {0} with dets {1}'.format(rank, self.default_dets))
+        for evt_idx, evt in enumerate(self.ds.events()):
+            default_data = detData(self.default_dets, evt)
+            logger.debug('Got data {0}'.format(default_data))
+
+            if evt_idx == self.evnt_lim:
+                logger.debug('We collected our events, exiting')
+                MPI.Finalize()
+
