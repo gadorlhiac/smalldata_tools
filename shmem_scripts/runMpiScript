@@ -5,7 +5,6 @@ cd /reg/neh/home/aegger/smalldata_tools/shmem_scripts
 pythonpathmunge '/reg/neh/home/aegger/smalldata_tools'
 #cd /reg/neh/operator/xcsopr/live_data/smalldata/
 #pythonpathmunge '/reg/g/psdm/sw/tools/smalldata_tools'
-python mpi_driver.py shmem
 #`which mpirun` -n 11 mpiScript.sh
 #`which mpirun` -n 5 mpiScript.sh
 #`which mpirun` -n 23 --oversubscribe -H daq-xpp-mon05,daq-xpp-mon06 mpiScript.sh

@@ -40,7 +40,7 @@ class mpidata(object):
 
     def recv(self):
         assert rank==0
-        status=MPI.Status()       
+        status=MPI.Status()
         self.small=comm.recv(source=MPI.ANY_SOURCE,tag=MPI.ANY_TAG,status=status)
         recvRank = status.Get_source()
         if not self.small.endrun:
