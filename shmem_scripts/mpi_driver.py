@@ -1,6 +1,6 @@
 # Local imports
-from shmem_scripts.mpi_worker import MpiWorker
-from shmem_scripts.mpi_master import MpiMaster
+from mpi_worker import MpiWorker
+from mpi_master import MpiMaster
 from smalldata_tools.SmallDataUtils import defaultDetectors
 
 # Import mpi, check that we have enough cores
@@ -9,7 +9,7 @@ comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 assert size > 1, 'At least 2 MPI ranks required'
-
+import psana
 import logging
 f = '%(asctime)s - %(levelname)s - %(filename)s:%(funcName)s - %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=f)
@@ -38,15 +38,16 @@ if args.cfg_file:
     raise NotImplementedError('config file not implemented')
 
 # Can look at ways of automating this later
-if not args.exprun:
-    raise ValueError('You have not provided an experiment')
+#if not args.exprun:
+#    raise ValueError('You have not provided an experiment')
 
-hutch = args.exprun.split('exp=')[1][:3]
-detectors = defaultDetectors(hutch)
-
+hutch = 'xcs'#args.exprun.split('exp=')[1][:3]
+dsname = 'shmem=psana.0:stop=no'
 if rank == 0:
     master = MpiMaster(rank)
     master.start_run()
 else:
-    worker = MpiWorker(dsname, args.nevts, detectors, rank)
+    ds = psana.DataSource(dsname)
+    detectors = defaultDetectors(hutch)
+    worker = MpiWorker(ds, args.nevts, detectors, rank)
     worker.start_run()
