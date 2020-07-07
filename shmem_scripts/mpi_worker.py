@@ -42,9 +42,8 @@ DAMAGE_LIST = [
 class MpiWorker(object):
     """This worker will collect events and do whatever
     necessary processing, then send to master"""
-    def __init__(self, dsname, evnt_lim, detectors, rank, var_list=VAR_LIST, damage_list=DAMAGE_LIST):
-        self._dsname = dsname
-        self._ds = psana.DataSource(self._dsname)
+    def __init__(self, ds, evnt_lim, detectors, rank, var_list=VAR_LIST, damage_list=DAMAGE_LIST):
+        self._ds = ds
         self._evnt_lim = evnt_lim
         self._detectors = detectors
         self._damage_list = damage_list
@@ -68,9 +67,9 @@ class MpiWorker(object):
         return self._evnt_lim
 
     @property
-    def dsname(self):
-        """Instantiate DataSource object"""
-        return self._dsname
+    def ds(self):
+        """DataSource object"""
+        return self._ds
 
     @property
     def detectors(self):
@@ -115,17 +114,17 @@ class MpiWorker(object):
 
     def start_run(self):
         """Worker should be incredibly light weight"""
-        logger.debug('Starting worker {0} with dets {1}'.format(self._rank, self.default_dets))
+        logger.debug('Starting worker {0} with dets {1}'.format(self._rank, self.detectors))
         for evt_idx, evt in enumerate(self.ds.events()):
             default_data = detData(self._detectors, evt)
             
             # Check for damaged detectors to continue
-            damaged = check_damage(self._damage_list, default_data['damage'])
+            damaged = self.check_damage(self._damage_list, default_data['damage'])
             if damaged:
                 continue
             
             # See if we find our special keys in dict two levels deep
-            result = unpack(self._var_list, default_data, {})
+            result = self.unpack(self._var_list, default_data, {})
             req = self.comm.isend(result, dest=0, tag=self.rank)
             req.wait()
 

@@ -1,6 +1,6 @@
 from mpi4py import MPI
 import logging
-from shmem_scripts.shmem_data import ShmemData
+#from shmem_scripts.shmem_data import ShmemData
 
 f = '%(asctime)s - %(levelname)s - %(filename)s:%(funcName)s - %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=f)
