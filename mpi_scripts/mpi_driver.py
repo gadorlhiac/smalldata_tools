@@ -10,6 +10,7 @@ size = comm.Get_size()
 rank = comm.Get_rank()
 assert size > 1, 'At least 2 MPI ranks required'
 import psana
+import yaml
 import logging
 f = '%(asctime)s - %(levelname)s - %(filename)s:%(funcName)s - %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=f)
@@ -21,7 +22,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--exprun', help='psana experiment/run string (e.g. exp=xppd7114:run=43)', type=str, default='')
 parser.add_argument('--dsname', help='data source name', type=str, default='')
 parser.add_argument('--nevts', help='number of events', default=50, type=int)
-parser.add_argument('--cfg_file', help='if specified, has information about what metadata to use', type=str)
+parser.add_argument('--cfg_file', help='if specified, has information about what metadata to use', type=str, default='default_config.yml')
 args = parser.parse_args()
 
 # Define data source name
@@ -34,8 +35,11 @@ if not dsname:
     else:
         raise ValueError('Data source name could not be determined')
 
-if args.cfg_file:
-    raise NotImplementedError('config file not implemented')
+# Parse config file to hand to workers
+with open(''.join(['mpi_configs/', args.cfg_file])) as f:
+    yml_dict = yaml.load(f, Loader=yaml.FullLoader)
+    var_list = yml_dict['var_list']
+    damage_list = yml_dict['damage_list']
 
 # Can look at ways of automating this later
 #if not args.exprun:
@@ -49,5 +53,5 @@ if rank == 0:
 else:
     ds = psana.DataSource(dsname)
     detectors = defaultDetectors(hutch)
-    worker = MpiWorker(ds, args.nevts, detectors, rank)
+    worker = MpiWorker(ds, args.nevts, detectors, rank, var_list=var_list, damage_list=damage_list)
     worker.start_run()

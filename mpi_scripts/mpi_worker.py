@@ -16,33 +16,11 @@ f = '%(asctime)s - %(levelname)s - %(filename)s:%(funcName)s - %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=f)
 logger = logging.getLogger(__name__)
 
-# Defaults.  These should be passed in by some means,
-# like a json/yaml file perhaps.  This will change based on
-# what we're trying to do for which hutch, etc...
-
-# Vars we're interested in passing
-VAR_LIST = [
-    'event_time',
-    'ipm2_dg2__sum',
-    'sc2slit_s',
-    'lightStatus__laser',
-    'lightStatus__xray'
-]
-
-# This is a list of devices where if damage is 0
-# we automatically skip that event.
-DAMAGE_LIST = [
-    'ipm2',
-    'imp5',
-    'evr0',
-    'tt',
-    'enc' 
-]
 
 class MpiWorker(object):
     """This worker will collect events and do whatever
     necessary processing, then send to master"""
-    def __init__(self, ds, evnt_lim, detectors, rank, var_list=VAR_LIST, damage_list=DAMAGE_LIST):
+    def __init__(self, ds, evnt_lim, detectors, rank, var_list, damage_list):
         self._ds = ds
         self._evnt_lim = evnt_lim
         self._detectors = detectors
