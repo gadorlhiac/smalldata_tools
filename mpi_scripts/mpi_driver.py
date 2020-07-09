@@ -18,10 +18,10 @@ logger = logging.getLogger(__name__)
 # All the args
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('-exprun', help='psana experiment/run string (e.g. exp=xppd7114:run=43)', type=str, default='')
-parser.add_argument('-dsname', help='data source name', type=str, default='')
-parser.add_argument('-nevts', help='number of events', default=50, type=int)
-parser.add_argument('-cfg_file', help='if specified, has information about what metadata to use', type=str)
+parser.add_argument('--exprun', help='psana experiment/run string (e.g. exp=xppd7114:run=43)', type=str, default='')
+parser.add_argument('--dsname', help='data source name', type=str, default='')
+parser.add_argument('--nevts', help='number of events', default=50, type=int)
+parser.add_argument('--cfg_file', help='if specified, has information about what metadata to use', type=str)
 args = parser.parse_args()
 
 # Define data source name
