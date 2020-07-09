@@ -1,0 +1,12 @@
+var_list:
+  - event_time
+  - ipm2_dg2__sum
+  - sc2slit_s
+  - lightStatus__laser
+  - lightStatus__xray
+damage_list:
+  - ipm2
+  - ipm5
+  - evr0
+  - tt
+  - enc
