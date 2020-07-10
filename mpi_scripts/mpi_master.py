@@ -1,5 +1,6 @@
 from mpi4py import MPI
 import logging
+import numpy as np
 #from shmem_scripts.shmem_data import ShmemData
 
 f = '%(asctime)s - %(levelname)s - %(filename)s:%(funcName)s - %(message)s'
@@ -48,10 +49,15 @@ class MpiMaster(object):
     def start_run(self):
         self._running = True
         while not self._abort:
-            req = self.comm.irecv(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG)
-            # Do any work here
-            data = req.wait()
-            logger.debug('Master quired data')
+            status = MPI.Status()
+            ready = self.comm.Iprobe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+            if ready:
+                data = np.empty(status.Get_elements(MPI.DOUBLE), dtype=np.float64)
+                self.comm.Recv(data, source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+                logger.debug('Master quired data ')
+                print(data)
+            else:
+                pass
 
         size = MPI.Get_size()
         MPI.Finalize()
