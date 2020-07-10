@@ -103,8 +103,12 @@ class MpiWorker(object):
             
             # See if we find our special keys in dict two levels deep
             result = self.unpack(self._var_list, default_data, {})
-            req = self.comm.isend(result, dest=0, tag=self.rank)
-            req.wait()
+            #req = self.comm.isend(result, dest=0, tag=self.rank)
+            #req.wait()
+
+            data = np.arange(100, dtype=np.float64)
+            self.comm.Send(data, dest=0, tag=self.rank)
+            #req.Wait()
 
             if evt_idx == self.evnt_lim:
                 logger.debug('We collected our events, exiting')
