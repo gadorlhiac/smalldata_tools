@@ -40,6 +40,7 @@ with open(''.join(['mpi_configs/', args.cfg_file])) as f:
     yml_dict = yaml.load(f, Loader=yaml.FullLoader)
     var_list = yml_dict['var_list']
     damage_list = yml_dict['damage_list']
+    api_port = yml_dict['api_msg']['port']
 
 # Can look at ways of automating this later
 #if not args.exprun:
@@ -47,11 +48,12 @@ with open(''.join(['mpi_configs/', args.cfg_file])) as f:
 
 hutch = 'xcs'#args.exprun.split('exp=')[1][:3]
 dsname = 'shmem=psana.0:stop=no'
+ds = psana.DataSource(dsname)
+detectors = defaultDetectors(hutch)
+
 if rank == 0:
-    master = MpiMaster(rank)
+    master = MpiMaster(rank, api_port)
     master.start_run()
 else:
-    ds = psana.DataSource(dsname)
-    detectors = defaultDetectors(hutch)
     worker = MpiWorker(ds, args.nevts, detectors, rank, var_list=var_list, damage_list=damage_list)
     worker.start_run()
