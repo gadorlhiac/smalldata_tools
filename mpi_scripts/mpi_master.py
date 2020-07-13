@@ -61,16 +61,22 @@ class MpiMaster(object):
             else:
                 pass
 
+        logger.debug('Abort has been called, terminating mpi run')
         MPI.Finalize()
 
     def start_msg_thread(self, api_port):
         """The thread runs a PAIR communication and acts as server side,
         this allows for control of the parameters during data aquisition 
-        from some client (probably an API for user)
+        from some client (probably an API for user). Might do subpub if
+        we want messages to be handled by workers as well, or master can
+        broadcast information
         """
         context = zmq.Context()
         socket = context.socket(zmq.PAIR)
         socket.bind(''.join(['tcp://*:', str(api_port)]))
         while True:
             message = socket.recv()
-            print('Received Message, ', message)
+            if message == 'abort':
+                self.abort = True
+            else:
+                print('Received Message with no definition ', message)
