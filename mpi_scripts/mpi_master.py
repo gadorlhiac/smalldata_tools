@@ -70,7 +70,7 @@ class MpiMaster(object):
         """
         context = zmq.Context()
         socket = context.socket(zmq.PAIR)
-        socket.bind(''.join(['tcp://*:', api_port]))
+        socket.bind(''.join(['tcp://*:', str(api_port)]))
         while True:
             message = socket.recv()
-            logger.debug('Received Message, ', message)
+            print('Received Message, ', message)
