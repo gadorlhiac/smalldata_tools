@@ -1,6 +1,8 @@
 from mpi4py import MPI
 import logging
 import numpy as np
+import zmq
+from threading import Thread
 #from shmem_scripts.shmem_data import ShmemData
 
 f = '%(asctime)s - %(levelname)s - %(filename)s:%(funcName)s - %(message)s'
@@ -8,12 +10,14 @@ logging.basicConfig(level=logging.DEBUG, format=f)
 logger = logging.getLogger(__name__)
 
 class MpiMaster(object):
-    def __init__(self, rank):
+    def __init__(self, rank, api_port):
         self._rank = rank
         self._comm = MPI.COMM_WORLD
         self._workers = []
         self._running = False
         self._abort = False
+        self._msg_thread = Thread(target=self.start_msg_thread, args=(api_port,))
+        self._msg_thread.start()
 
     @property
     def rank(self):
@@ -54,11 +58,19 @@ class MpiMaster(object):
             if ready:
                 data = np.empty(status.Get_elements(MPI.DOUBLE), dtype=np.float64)
                 self.comm.Recv(data, source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
-                logger.debug('Master quired data ')
-                print(data)
             else:
                 pass
 
-        size = MPI.Get_size()
         MPI.Finalize()
 
+    def start_msg_thread(self, api_port):
+        """The thread runs a PAIR communication and acts as server side,
+        this allows for control of the parameters during data aquisition 
+        from some client (probably an API for user)
+        """
+        context = zmq.Context()
+        socket = context.socket(zmq.PAIR)
+        socket.bind(''.join(['tcp://*:', api_port]))
+        while True:
+            message = socket.recv()
+            logger.debug('Received Message, ', message)
