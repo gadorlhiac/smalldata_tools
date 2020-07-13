@@ -11,7 +11,7 @@ with open(''.join(['mpi_configs/', args.cfg_file])) as f:
 
 context = zmq.Context()
 socket = context.socket(zmq.PAIR)
-socket.connect(['tcp://localhost:', api_port])
+socket.connect(''.join(['tcp://localhost:', str(api_port)]))
 
 def abort():
     """Abort MPI run"""
