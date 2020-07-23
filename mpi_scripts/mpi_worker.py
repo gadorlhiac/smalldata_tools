@@ -74,7 +74,6 @@ class MpiWorker(object):
                         continue
                     new_key = ''.join([k, '__', k1])
                     if new_key in l:
-                        print('new key in l ', new_key)
                         result[new_key] = v1
             elif k in l:
                 result[k] = v
@@ -95,8 +94,8 @@ class MpiWorker(object):
         """Worker should be incredibly light weight"""
         logger.debug('Starting worker {0} with dets {1}'.format(self._rank, self.detectors))
         for evt_idx, evt in enumerate(self.ds.events()):
+            data = psana.Detector('jungfrau4M').raw_data(evt)
             default_data = detData(self._detectors, evt)
-            print('default data ', default_data)
             # Check for damaged detectors to continue
             damaged = self.check_damage(self._damage_list, default_data['damage'])
             if damaged:
@@ -108,8 +107,9 @@ class MpiWorker(object):
             result['event_time'] = '%.4f' % (ts[0] + ts[1]/1e9)
             # This is where work for data preparation needs to go
             # we'll use send for py objects and Send for arrays
-            data = np.arange(100, dtype=np.float64)
-            self.comm.Send(data, dest=0, tag=str(self.rank))
+            #data = np.arange(100, dtype=np.float64)
+            print('worker ', data)
+            self.comm.Send(data, dest=0, tag=1)
 
             if evt_idx == self.evnt_lim:
                 logger.debug('We collected our events, exiting')
