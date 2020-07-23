@@ -3,7 +3,8 @@ api_msg:
 
 var_list:
   - event_time
-  - ipm2_dg2__sum
+  - ipm_dg2__sum
+  - ipm_dg2__peaks
   - sc2slit_s
   - lightStatus__laser
   - lightStatus__xray
