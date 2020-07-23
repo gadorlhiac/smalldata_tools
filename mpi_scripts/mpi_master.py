@@ -11,6 +11,9 @@ f = '%(asctime)s - %(levelname)s - %(filename)s:%(funcName)s - %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=f)
 logger = logging.getLogger(__name__)
 
+MAP = {
+    1: [8, 512, 1024]
+}
 
 class MpiMaster(object):
     def __init__(self, rank, api_port):
@@ -59,8 +62,10 @@ class MpiMaster(object):
             status = MPI.Status()
             ready = self.comm.Iprobe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
             if ready:
-                data = np.empty(status.Get_elements(MPI.DOUBLE), dtype=np.float64)
+                
+                data = np.empty(MAP[status.Get_tag()], dtype=np.uint16)
                 self.comm.Recv(data, source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+                print(data)
             else:
                 pass
 
