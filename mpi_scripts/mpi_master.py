@@ -1,13 +1,16 @@
 from mpi4py import MPI
+import sys
 import logging
 import numpy as np
 import zmq
 from threading import Thread
+from enum import Enum
 #from shmem_scripts.shmem_data import ShmemData
 
 f = '%(asctime)s - %(levelname)s - %(filename)s:%(funcName)s - %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=f)
 logger = logging.getLogger(__name__)
+
 
 class MpiMaster(object):
     def __init__(self, rank, api_port):
@@ -78,5 +81,6 @@ class MpiMaster(object):
             message = socket.recv()
             if message == 'abort':
                 self.abort = True
+                socket.send('aborted')
             else:
                 print('Received Message with no definition ', message)

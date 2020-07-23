@@ -2,7 +2,6 @@
 from mpi_worker import MpiWorker
 from mpi_master import MpiMaster
 from smalldata_tools.SmallDataUtils import defaultDetectors
-
 # Import mpi, check that we have enough cores
 from mpi4py import MPI
 comm = MPI.COMM_WORLD
@@ -45,12 +44,10 @@ with open(''.join(['mpi_configs/', args.cfg_file])) as f:
 # Can look at ways of automating this later
 #if not args.exprun:
 #    raise ValueError('You have not provided an experiment')
-
-hutch = 'xcs'#args.exprun.split('exp=')[1][:3]
+hutch = 'cxi'#args.exprun.split('exp=')[1][:3]
 dsname = 'shmem=psana.0:stop=no'
 ds = psana.DataSource(dsname)
 detectors = defaultDetectors(hutch)
-
 if rank == 0:
     master = MpiMaster(rank, api_port)
     master.start_run()
