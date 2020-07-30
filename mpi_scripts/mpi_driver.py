@@ -41,6 +41,7 @@ with open(''.join(['mpi_configs/', args.cfg_file])) as f:
     damage_list = yml_dict['damage_list']
     api_port = yml_dict['api_msg']['port']
     det_map = yml_dict['det_map']
+    det_keys = {v['name']: k for k, v in det_map.items()}
 
 # Can look at ways of automating this later
 #if not args.exprun:
@@ -53,5 +54,5 @@ if rank == 0:
     master = MpiMaster(rank, api_port, det_map)
     master.start_run()
 else:
-    worker = MpiWorker(ds, args.nevts, detectors, rank, var_list=var_list, damage_list=damage_list)
+    worker = MpiWorker(ds, args.nevts, det_keys, rank, var_list=var_list, damage_list=damage_list)
     worker.start_run()
