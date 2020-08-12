@@ -1,4 +1,6 @@
 import psana
+from psmon.plots import Image
+from psmon import publish
 import numpy as np
 import os
 import logging
@@ -28,6 +30,7 @@ class MpiWorker(object):
         self._var_list = var_list
         self._comm = MPI.COMM_WORLD
         self._rank = rank
+        publish.init()
 
     @property
     def rank(self):
@@ -94,7 +97,10 @@ class MpiWorker(object):
         """Worker should be incredibly light weight"""
         logger.debug('Starting worker {0} with dets {1}'.format(self._rank, self.detectors))
         for evt_idx, evt in enumerate(self.ds.events()):
-            data = psana.Detector('jungfrau4M').raw_data(evt)
+            #print(psana.DetNames())
+            data = psana.Detector('DsdCsPad').image(evt)
+            img = Image(0, 'cspad', data)
+            publish.send('image', img)
             default_data = detData(self._detectors, evt)
             # Check for damaged detectors to continue
             damaged = self.check_damage(self._damage_list, default_data['damage'])
@@ -109,7 +115,7 @@ class MpiWorker(object):
             # we'll use send for py objects and Send for arrays
             #data = np.arange(100, dtype=np.float64)
             print('worker ', data)
-            self.comm.Send(data, dest=0, tag=1)
+            #self.comm.Send(data, dest=0, tag=1)
 
             if evt_idx == self.evnt_lim:
                 logger.debug('We collected our events, exiting')

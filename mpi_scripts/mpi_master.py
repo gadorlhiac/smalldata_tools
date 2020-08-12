@@ -60,10 +60,10 @@ class MpiMaster(object):
             status = MPI.Status()
             ready = self.comm.Iprobe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
             if ready:
-                det_info = self._det_map[status.Get_tag]
-                data = np.empty(det_info['shape'], dtype=np.dtype(det_info['dtype']))
-                self.comm.Recv(data, source=status.Get_source(), tag=MPI.ANY_TAG, status=status)
-                print(data)
+                det_info = self._det_map[status.Get_tag()]
+                #data = np.empty(det_info['shape'], dtype=np.dtype(det_info['dtype']))
+                #self.comm.Recv(data, source=status.Get_source(), tag=MPI.ANY_TAG, status=status)
+                #print(data)
             else:
                 pass
 
