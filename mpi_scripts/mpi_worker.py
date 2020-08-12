@@ -22,10 +22,10 @@ logger = logging.getLogger(__name__)
 class MpiWorker(object):
     """This worker will collect events and do whatever
     necessary processing, then send to master"""
-    def __init__(self, ds, evnt_lim, detectors, rank, var_list, damage_list):
+    def __init__(self, ds, evnt_lim, det_keys, rank, var_list, damage_list):
         self._ds = ds
         self._evnt_lim = evnt_lim
-        self._detectors = detectors
+        self._det_keys = det_keys
         self._damage_list = damage_list
         self._var_list = var_list
         self._comm = MPI.COMM_WORLD
@@ -53,9 +53,9 @@ class MpiWorker(object):
         return self._ds
 
     @property
-    def detectors(self):
+    def det_keys(self):
         """Detectors to get data from"""
-        return self._detectors
+        return self._det_keys
 
     @property
     def comm(self):
@@ -95,7 +95,7 @@ class MpiWorker(object):
 
     def start_run(self):
         """Worker should be incredibly light weight"""
-        logger.debug('Starting worker {0} with dets {1}'.format(self._rank, self.detectors))
+        logger.debug('Starting worker {0} with dets {1}'.format(self._rank, self.det_keys.keys()))
         for evt_idx, evt in enumerate(self.ds.events()):
             #print(psana.DetNames())
             data = psana.Detector('DsdCsPad').image(evt)
