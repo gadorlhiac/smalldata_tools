@@ -17,10 +17,9 @@ damage_list:
   - enc
 
 det_map:
-  1:
-    name: 'jungfrau4M'
-    shape:
-      - 8
-      - 512
-      - 1024
-    dtype: uint16
+  name: 'jungfrau4M'
+  shape:
+    - 2203
+    - 2299
+  dtype: float32
+  bins: 50

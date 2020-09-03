@@ -5,6 +5,7 @@ import numpy as np
 import zmq
 from threading import Thread
 from enum import Enum
+from collections import deque
 #from shmem_scripts.shmem_data import ShmemData
 
 f = '%(asctime)s - %(levelname)s - %(filename)s:%(funcName)s - %(message)s'
@@ -20,8 +21,11 @@ class MpiMaster(object):
         self._workers = []
         self._running = False
         self._abort = False
+        self._queue = deque()
         self._msg_thread = Thread(target=self.start_msg_thread, args=(api_port,))
         self._msg_thread.start()
+        self._queue_thread = Thread(target=self.start_queue_thread)
+        self._queue_thread.start()
 
     @property
     def rank(self):
@@ -37,6 +41,16 @@ class MpiMaster(object):
     def workers(self):
         """Workers currently sending"""
         return self._workers
+
+    @property
+    def det_map(self):
+        """Detector info"""
+        return self._det_map
+
+    @property
+    def queue(self):
+        """Queue for processing data from workers"""
+        return self._queue
 
     @property
     def running(self):
@@ -60,10 +74,9 @@ class MpiMaster(object):
             status = MPI.Status()
             ready = self.comm.Iprobe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
             if ready:
-                det_info = self._det_map[status.Get_tag()]
-                #data = np.empty(det_info['shape'], dtype=np.dtype(det_info['dtype']))
-                #self.comm.Recv(data, source=status.Get_source(), tag=MPI.ANY_TAG, status=status)
-                #print(data)
+                data = np.empty(self.det_map['bins'], dtype=np.dtype(self.det_map['dtype']))
+                self.comm.Recv(data, source=status.Get_source(), tag=MPI.ANY_TAG, status=status)
+                self.queue.append(data)
             else:
                 pass
 
@@ -87,3 +100,11 @@ class MpiMaster(object):
                 socket.send('aborted')
             else:
                 print('Received Message with no definition ', message)
+
+    def start_queue_thread(self):
+        """This thread simply looks for items in the queue and writes
+        the data to the appropriate PVs
+        """
+        while True:
+            if len(self.queue) > 0:
+                print('we have an item in the queue ', self.queue.popleft())

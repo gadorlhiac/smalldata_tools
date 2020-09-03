@@ -1,6 +1,7 @@
 # Local imports
 from mpi_worker import MpiWorker
 from mpi_master import MpiMaster
+from utils import get_r_masks
 from smalldata_tools.SmallDataUtils import defaultDetectors
 # Import mpi, check that we have enough cores
 from mpi4py import MPI
@@ -41,18 +42,20 @@ with open(''.join(['mpi_configs/', args.cfg_file])) as f:
     damage_list = yml_dict['damage_list']
     api_port = yml_dict['api_msg']['port']
     det_map = yml_dict['det_map']
-    det_keys = {v['name']: k for k, v in det_map.items()}
 
 # Can look at ways of automating this later
 #if not args.exprun:
 #    raise ValueError('You have not provided an experiment')
 hutch = 'cxi'#args.exprun.split('exp=')[1][:3]
 dsname = 'shmem=psana.0:stop=no'
+psana.setOption('psana.calib-dir', '/reg/d/psdm/cxi/cxic00318/calib/')
 ds = psana.DataSource(dsname)
-detectors = defaultDetectors(hutch)
+detector = psana.Detector(det_map['name'])
+r_mask = get_r_masks(det_map['shape'])
+#detectors = defaultDetectors(hutch)
 if rank == 0:
     master = MpiMaster(rank, api_port, det_map)
     master.start_run()
 else:
-    worker = MpiWorker(ds, args.nevts, det_keys, rank, var_list=var_list, damage_list=damage_list)
+    worker = MpiWorker(ds, args.nevts, detector, rank, var_list, damage_list, r_mask)
     worker.start_run()
