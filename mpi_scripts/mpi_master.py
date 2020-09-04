@@ -3,6 +3,7 @@ import sys
 import logging
 import numpy as np
 import zmq
+from epics import caput
 from threading import Thread
 from enum import Enum
 from collections import deque
@@ -92,6 +93,7 @@ class MpiMaster(object):
         """
         context = zmq.Context()
         socket = context.socket(zmq.PAIR)
+        # TODO: make IP available arg
         socket.bind(''.join(['tcp://*:', str(api_port)]))
         while True:
             message = socket.recv()
@@ -107,4 +109,7 @@ class MpiMaster(object):
         """
         while True:
             if len(self.queue) > 0:
-                print('we have an item in the queue ', self.queue.popleft())
+                data = self.queue.popleft()
+                intensity = np.sum(data[20:30])
+                caput('CXI:JTRK:REQ:DIFF_INTENSITY', intensity)
+                #print('we have an item in the queue ', self.queue.popleft())

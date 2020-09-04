@@ -104,8 +104,8 @@ class MpiWorker(object):
         skipped_events = 0
         for evt_idx, evt in enumerate(self.ds.events()):
             # Don't do anything if the event doesn't have requested event code
-            if self.event_code not in evr_det.eventCodes(evt):
-                 continue
+            #if self.event_code not in evr_det.eventCodes(evt):
+            #     continue
             
             # Compare event timestamp to current time for latency
             ts = evt.get(psana.EventId).time()

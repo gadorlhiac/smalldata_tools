@@ -75,7 +75,7 @@ fi
 PROC=${PROC:='2'}
 
 source /reg/g/pcds/setup/pathmunge.sh
-source /reg/g/psdm/etc/psconda.sh
+source /reg/g/psdm/sw/conda1/manage/bin/psconda.sh
 cd /reg/neh/home/aegger/smalldata_tools/mpi_scripts
 pythonpathmunge '/reg/neh/home/aegger/smalldata_tools'
 #cd /reg/neh/operator/xcsopr/live_data/smalldata/
