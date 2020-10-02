@@ -3,8 +3,6 @@ from psmon.plots import Image
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from psmon import publish
-from smalldata_tools.DetObject import DetObject
-from smalldata_tools.azimuthalBinning import azimuthalBinning
 import numpy as np
 import os
 import logging
@@ -26,30 +24,26 @@ logger = logging.getLogger(__name__)
 class MpiWorker(object):
     """This worker will collect events and do whatever
     necessary processing, then send to master"""
-    def __init__(self, ds, evnt_lim, detector, rank, var_list, damage_list, r_mask, latency=0.5, event_code=40, evr_use='evr1', plot=False):
-        self._ds = ds
+    def __init__(self, ds, evnt_lim, detector, ipm, evr, damage_list, r_mask, latency=0.5, event_code=40, plot=False, peak_bin=25, delta_bin=5):
+        self._ds = ds  # We probably need to use kwargs to make this general
         self._evnt_lim = evnt_lim
         self._detector = detector
+        self._ipm = ipm
+        self._evr = evr
         self._damage_list = damage_list
-        self._var_list = var_list
         self._comm = MPI.COMM_WORLD
         self._rank = self._comm.Get_rank()
         self._r_mask = r_mask
         self._plot = plot
         self._latency = latency
         self._event_code = event_code
-        self._evr_use = evr_use
-        #publish.init()
+        self._peak_bin = peak_bin
+        self._delta_bin = delta_bin
 
     @property
     def rank(self):
         """Worker ID"""
         return self._rank
-
-    @property
-    def var_list(self):
-        """List of variables we want to send"""
-        return self._var_list
 
     @property
     def evnt_lim(self):
@@ -72,6 +66,16 @@ class MpiWorker(object):
         return self._comm
 
     @property
+    def ipm(self):
+        """IPM Detector"""
+        return self._ipm
+
+    @property
+    def evr(self):
+        """EVR detector"""
+        return self._evr
+
+    @property
     def plot(self):
         """Whether we should plot detector"""
         return self._plot
@@ -87,51 +91,46 @@ class MpiWorker(object):
         return self._event_code
 
     @property
-    def evr_use(self):
-        """Evr the detector is running on"""
-        return self._evr_use
+    def peak_bin(self):
+        return self._peak_bin
+
+    @peak_bin.setter
+    def peak_bin(self, peak_bin):
+        try:
+            self._peak_bin = int(peak_bin)
+        except:
+            logger.warning('You must provide int for peak bin')
+
+    @property
+    def delta_bin(self):
+        return self._delta_bin
+
+    @delta_bin.setter
+    def delta_bin(self, delta_bin):
+        try:
+            self._delta_bin = int(delta_bin)
+        except:
+            logger.warning('You must provide int for delta bin')
 
     def start_run(self):
-        """Worker should be incredibly light weight"""
-        #logger.debug('Starting worker {0} with dets {1}'.format(self._rank, self.detectors))
+        """Worker should handle any calculations"""
         #mask_det = det.mask(188, unbond=True, unbondnbrs=True, status=True,  edges=True, central=True)
-        det_names = psana.DetNames()
-        print('evr ', det_names)
-        evr_det = psana.Detector(self.evr_use)  # Get this from driver
-        ped = self.detector.pedestals(188)[0]  # Get this from driver
-        gain = self.detector.gain(188)[0]  # Get this from driver
-        #bld = psana.Detector('EBeam')
-        skipped_events = 0
+        # TODO: Pass this in from driver
+        ped = self.detector.pedestals(188)[0]
+        #gain = self.detector.gain(188)[0]
         for evt_idx, evt in enumerate(self.ds.events()):
-            # Don't do anything if the event doesn't have requested event code
-            #if self.event_code not in evr_det.eventCodes(evt):
+            #if self.event_code not in self.evr.eventCodes(evt):
             #     continue
-            
-            # Compare event timestamp to current time for latency
-            ts = evt.get(psana.EventId).time()
-            ts = ts[0] + ts[1] / 1e9
-            delay = abs(time.time() - ts)
-
-            # If we're falling behind just skip events
-            if delay > self.latency:
-                continue
-
-            # TODO: Provide options to use ped and gain, use mask
-            raw = (self.detector.raw_data(evt) - ped) * gain
+            low_bin = self.peak_bin - self.delta_bin
+            hi_bin = self.peak_bin + self.delta_bin
+            raw = (self.detector.raw_data(evt) - ped)
             data = self.detector.image(evt, raw)
-            az_bins = np.array([np.mean(data[mask]) for mask in self._r_mask])
-            self.comm.Send(az_bins, dest=0, tag=self.rank)
-            # float32
-            #if evt_idx==2:
-            #    plt.plot(az_bins)
-            #    plt.show()
-            #img = Image(0, 'cspad', data)
-            #publish.send('image', img)
-            #default_data = detData(self.detectors, evt)
-            
-            # Check for damaged detectors to continue
-            #damaged = self.check_damage(self._damage_list, default_data['damage'])
-            #if damaged:
-            #    continue
-            
-            #self.comm.Send(data, dest=0, tag=ts)
+            az_bins = np.array([np.mean(data[mask]) for mask in self._r_mask[low_bin:hi_bin]])
+            intensity = np.sum(az_bins)
+            #i0 = np.sum(self.ipm.raw(evt)[0])  # TODO: allow wave8
+            try:
+                i0 = self.ipm.get(evt).f_12_ENRC()  # TODO: Not make the world hard coded
+            except:  # Missing gdet data
+                pass
+            packet = np.array([i0, intensity], dtype='float32')
+            self.comm.Send(packet, dest=0, tag=self.rank)

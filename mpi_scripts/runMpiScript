@@ -59,16 +59,16 @@ done
 # Pull out mpi_driver.py args
 ARGS=''
 if [[ -v EXPRUN ]]; then
-  ARGS+=' --exprun 'EXPRUN
+  ARGS+=' --exprun '$EXPRUN
 fi
 if [[ -v DSNAME ]]; then
-  ARGS+=' --dsname 'DSNAME
+  ARGS+=' --dsname '$DSNAME
 fi
 if [[ -v NEVTS ]]; then
-  ARGS+=' --nevts 'NEVTS
+  ARGS+=' --nevts '$NEVTS
 fi
 if [[ -v CFGFILE ]]; then
-  ARGS+=' --cfg_file 'CFGFILE
+  ARGS+=' --cfg_file '$CFGFILE
 fi
 
 # If user doesn't specify use minimum required
@@ -78,6 +78,4 @@ source /reg/g/pcds/setup/pathmunge.sh
 source /reg/g/psdm/sw/conda1/manage/bin/psconda.sh
 cd /reg/neh/home/aegger/smalldata_tools/mpi_scripts
 pythonpathmunge '/reg/neh/home/aegger/smalldata_tools'
-#cd /reg/neh/operator/xcsopr/live_data/smalldata/
-#pythonpathmunge '/reg/g/psdm/sw/tools/smalldata_tools'
 `which mpirun` -n $PROC python mpi_driver.py $ARGS

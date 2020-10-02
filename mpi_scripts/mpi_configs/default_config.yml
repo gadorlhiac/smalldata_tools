@@ -23,3 +23,7 @@ det_map:
     - 2299
   dtype: float32
   bins: 50
+
+evr: 'evr2'
+
+ipm: 'CXI-DG2-BMMON-WF'

@@ -3,6 +3,7 @@ import sys
 import logging
 import numpy as np
 import zmq
+import time
 from epics import caput
 from threading import Thread
 from enum import Enum
@@ -15,17 +16,18 @@ logger = logging.getLogger(__name__)
 
 
 class MpiMaster(object):
-    def __init__(self, rank, api_port, det_map):
+    def __init__(self, rank, api_port, det_map, psana=True, data_port=8123):
         self._rank = rank
         self._det_map = det_map
+        self._psana = psana
         self._comm = MPI.COMM_WORLD
-        self._workers = []
+        self._workers = range(self._comm.Get_size())[1:]
         self._running = False
         self._abort = False
         self._queue = deque()
         self._msg_thread = Thread(target=self.start_msg_thread, args=(api_port,))
         self._msg_thread.start()
-        self._queue_thread = Thread(target=self.start_queue_thread)
+        self._queue_thread = Thread(target=self.start_queue_thread, args=(data_port,))
         self._queue_thread.start()
 
     @property
@@ -75,10 +77,11 @@ class MpiMaster(object):
             status = MPI.Status()
             ready = self.comm.Iprobe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
             if ready:
-                data = np.empty(self.det_map['bins'], dtype=np.dtype(self.det_map['dtype']))
+                data = np.empty(2, dtype=np.dtype(self.det_map['dtype']))
                 self.comm.Recv(data, source=status.Get_source(), tag=MPI.ANY_TAG, status=status)
                 self.queue.append(data)
             else:
+                # We can use this to perform tasks
                 pass
 
         logger.debug('Abort has been called, terminating mpi run')
@@ -103,13 +106,34 @@ class MpiMaster(object):
             else:
                 print('Received Message with no definition ', message)
 
-    def start_queue_thread(self):
+    def start_queue_thread(self, data_port):
         """This thread simply looks for items in the queue and writes
         the data to the appropriate PVs
         """
+        if self._psana:
+            context = zmq.Context()
+            socket = context.socket(zmq.PUB)
+            socket.bind(''.join(['tcp://*:', str(data_port)]))
+            flags = 0
+        sent = 0
+        start = time.time()
         while True:
             if len(self.queue) > 0:
                 data = self.queue.popleft()
-                intensity = np.sum(data[20:30])
-                caput('CXI:JTRK:REQ:DIFF_INTENSITY', intensity)
-                #print('we have an item in the queue ', self.queue.popleft())
+                if self._psana:
+                    # Could need this if sending large arrays
+                    md = dict(
+                        dtype = str(data.dtype),
+                        shape = data.shape
+                    )
+                    socket.send_json(md, flags|zmq.SNDMORE)
+                    socket.send(data, flags, copy=False, track=False)
+                else:
+                    # TODO: These need to be passable 
+                    caput('CXI:JTRK:REQ:DIFF_INTENSITY', data[1])
+                    caput('CXI:JTRK:REQ:I0', data[0])
+                sent += 1
+                print('data rate ', sent / (time.time() - start))
+                if sent == 1000:
+                    sent = 0
+                    start = time.time()
