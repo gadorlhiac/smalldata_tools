@@ -39,6 +39,7 @@ class MpiWorker(object):
         self._event_code = event_code
         self._peak_bin = peak_bin
         self._delta_bin = delta_bin
+        self._state = None
 
     @property
     def rank(self):
@@ -119,6 +120,8 @@ class MpiWorker(object):
         ped = self.detector.pedestals(188)[0]
         #gain = self.detector.gain(188)[0]
         for evt_idx, evt in enumerate(self.ds.events()):
+            #self._state = self.comm.bcast(self._state, root=0)
+            #print('state ', self._state)
             #if self.event_code not in self.evr.eventCodes(evt):
             #     continue
             low_bin = self.peak_bin - self.delta_bin
@@ -132,5 +135,6 @@ class MpiWorker(object):
                 i0 = self.ipm.get(evt).f_12_ENRC()  # TODO: Not make the world hard coded
             except:  # Missing gdet data
                 pass
+            
             packet = np.array([i0, intensity], dtype='float32')
             self.comm.Send(packet, dest=0, tag=self.rank)

@@ -102,6 +102,8 @@ class MpiMaster(object):
             message = socket.recv()
             if message == 'abort':
                 self.abort = True
+                #state = np.array([0])
+               # self.comm.Bcast(state, root=0)
                 socket.send('aborted')
             else:
                 print('Received Message with no definition ', message)
@@ -117,6 +119,7 @@ class MpiMaster(object):
             flags = 0
         sent = 0
         start = time.time()
+        i = 0
         while True:
             if len(self.queue) > 0:
                 data = self.queue.popleft()
