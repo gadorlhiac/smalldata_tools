@@ -1,21 +1,6 @@
 api_msg:
   port: 5000
 
-var_list:
-  - event_time
-  - ipm_dg2__sum
-  - ipm_dg2__peaks
-  - sc2slit_s
-  - lightStatus__laser
-  - lightStatus__xray
-
-damage_list:
-  - ipm2
-  - ipm5
-  - evr0
-  - tt
-  - enc
-
 det_map:
   name: 'jungfrau4M'
   shape:
@@ -24,6 +9,9 @@ det_map:
   dtype: float32
   bins: 50
 
-evr: 'evr2'
-
-ipm: 'CXI-DG2-BMMON-WF'
+ipm: 
+  name: 'FEEGasDetEnergy'
+  det: 'f_12_ENRC' 
+#ipm:
+#  name: 'CXI-DG2-BMMON'
+#  det: None

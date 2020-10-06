@@ -1,4 +1,5 @@
 import numpy as np
+import psana
 
 def get_r_masks(shape, bins=50):
     """Function to generate radial masks for pixels to include in azav"""
@@ -15,3 +16,10 @@ def get_r_masks(shape, bins=50):
         masks.append(mask)
 
     return masks
+
+def get_evr_w_codes(det_names):
+    """Get the evr with the event codes, yes this changes..."""
+    evr_keys = [det[1] for det in det_names if 'evr' in det[1]]
+    evr_dict = {k: psana.Detector(k)._fetch_configs()[0].neventcodes()
+                for k in evr_keys}
+    return psana.Detector(max(evr_dict, key=evr_dict.get))

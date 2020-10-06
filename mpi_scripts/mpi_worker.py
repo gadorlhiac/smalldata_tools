@@ -24,13 +24,12 @@ logger = logging.getLogger(__name__)
 class MpiWorker(object):
     """This worker will collect events and do whatever
     necessary processing, then send to master"""
-    def __init__(self, ds, evnt_lim, detector, ipm, evr, damage_list, r_mask, latency=0.5, event_code=40, plot=False, peak_bin=25, delta_bin=5):
+    def __init__(self, ds, evnt_lim, detector, ipm, evr, r_mask, latency=0.5, event_code=40, plot=False, peak_bin=25, delta_bin=5):
         self._ds = ds  # We probably need to use kwargs to make this general
         self._evnt_lim = evnt_lim
         self._detector = detector
         self._ipm = ipm
         self._evr = evr
-        self._damage_list = damage_list
         self._comm = MPI.COMM_WORLD
         self._rank = self._comm.Get_rank()
         self._r_mask = r_mask
@@ -116,25 +115,23 @@ class MpiWorker(object):
     def start_run(self):
         """Worker should handle any calculations"""
         #mask_det = det.mask(188, unbond=True, unbondnbrs=True, status=True,  edges=True, central=True)
-        # TODO: Pass this in from driver
-        ped = self.detector.pedestals(188)[0]
-        #gain = self.detector.gain(188)[0]
+        ped = self.detector.pedestals(1)[0]
         for evt_idx, evt in enumerate(self.ds.events()):
-            #self._state = self.comm.bcast(self._state, root=0)
-            #print('state ', self._state)
-            #if self.event_code not in self.evr.eventCodes(evt):
-            #     continue
+            if self.event_code not in self.evr.eventCodes(evt):
+                 continue
             low_bin = self.peak_bin - self.delta_bin
             hi_bin = self.peak_bin + self.delta_bin
             raw = (self.detector.raw_data(evt) - ped)
             data = self.detector.image(evt, raw)
             az_bins = np.array([np.mean(data[mask]) for mask in self._r_mask[low_bin:hi_bin]])
             intensity = np.sum(az_bins)
-            #i0 = np.sum(self.ipm.raw(evt)[0])  # TODO: allow wave8
             try:
-                i0 = self.ipm.get(evt).f_12_ENRC()  # TODO: Not make the world hard coded
-            except:  # Missing gdet data
-                pass
+                i0 = self.ipm[0].get(evt)
+                if self.ipm[1]:
+                    det = getattr(i0, self.ipm[1])
+                    i0 = det()
+            except:
+                i0 = 0.0
             
             packet = np.array([i0, intensity], dtype='float32')
             self.comm.Send(packet, dest=0, tag=self.rank)
