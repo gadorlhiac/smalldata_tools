@@ -38,6 +38,7 @@ with open(''.join(['mpi_configs/', args.cfg_file])) as f:
     det_map = yml_dict['det_map']
     ipm_name = yml_dict['ipm']['name']
     ipm_det = yml_dict['ipm']['det']
+    pv_map = yml_dict['pv_map']
 
 # No way to do this only once with MPI
 ds = psana.DataSource(dsname)
@@ -51,8 +52,8 @@ evr = get_evr_w_codes(psana.DetNames())
 r_mask = get_r_masks(det_map['shape'])
 
 if rank == 0:
-    master = MpiMaster(rank, api_port, det_map)
-    master.start_run()
+    master = MpiMaster(rank, api_port, det_map, pv_map)
+    master.start_run2()
 else:
     worker = MpiWorker(ds, args.nevts, detector, ipm, evr, r_mask)
     worker.start_run()

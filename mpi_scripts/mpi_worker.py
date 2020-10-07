@@ -134,4 +134,4 @@ class MpiWorker(object):
                 i0 = 0.0
             
             packet = np.array([i0, intensity], dtype='float32')
-            self.comm.Send(packet, dest=0, tag=self.rank)
+            self.comm.Isend(packet, dest=0, tag=self.rank)
