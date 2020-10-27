@@ -117,6 +117,7 @@ class MpiWorker(object):
         #mask_det = det.mask(188, unbond=True, unbondnbrs=True, status=True,  edges=True, central=True)
         ped = self.detector.pedestals(1)[0]
         for evt_idx, evt in enumerate(self.ds.events()):
+            print(self.evr.eventCodes(evt))
             if self.event_code not in self.evr.eventCodes(evt):
                  continue
             low_bin = self.peak_bin - self.delta_bin

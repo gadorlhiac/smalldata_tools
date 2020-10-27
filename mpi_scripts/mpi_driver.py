@@ -50,10 +50,10 @@ ipm = (psana.Detector(ipm_name), ipm_det)
 evr = get_evr_w_codes(psana.DetNames())
 # Get the R masks, would be great to do this only once
 r_mask = get_r_masks(det_map['shape'])
-
+print(psana.DetNames())
 if rank == 0:
     master = MpiMaster(rank, api_port, det_map, pv_map)
-    master.start_run2()
+    master.start_run()
 else:
     worker = MpiWorker(ds, args.nevts, detector, ipm, evr, r_mask)
     worker.start_run()

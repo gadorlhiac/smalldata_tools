@@ -80,11 +80,11 @@ class MpiMaster(object):
 
         return None 
 
-    def start_run2(self):
+    def start_run(self):
         """Main process loop, we can probably get more async
         but for now it's a one to one recive/send
         """
-        while not self._abort:
+        while not self.abort:
             start = time.time()
             # TODO: Generalize data length
             data = np.empty(2, dtype=np.dtype(self.det_map['dtype']))
