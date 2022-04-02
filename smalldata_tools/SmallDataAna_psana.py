@@ -171,9 +171,6 @@ class SmallDataAna_psana(BaseSmallDataAna_psana):
             return keys
 
 
-#
-# these functions need psana as well, make separate class that imports SmallDataAna?
-#
     def addDetInfo(self, detname='None', common_mode=None):
         if detname=='None':
             aliases = self._getDetName()
@@ -185,13 +182,13 @@ class SmallDataAna_psana(BaseSmallDataAna_psana):
                     detsString+=alias+', '
                 print(detsString)
                 detname = raw_input("Select detector to get detector info for?:\n")
-        printR(rank, 'try to make psana Detector with: %s'%detname)
+        printR(rank, 'Try to make psana Detector with: %s'%detname)
 
-        detnameDict=None
+        detnameDict = None
         if isinstance(detname, dict):
             detnameDict = detname
             if 'common_mode' in detnameDict.keys() and common_mode is not None:
-                common_mode=detnameDict['common_mode']
+                common_mode = detnameDict['common_mode']
             detname = detnameDict['source']
 
         #only do this if information is not in object yet
@@ -202,9 +199,9 @@ class SmallDataAna_psana(BaseSmallDataAna_psana):
             return detname
 
         if detname in self.__dict__.keys():
-            printR(rank, 'redefine detector object with different common mode:'\
+            printR(rank, 'Redefine detector object with different common mode:'\
                    '%d instead of %d'%( common_mode,self.__dict__[detname].common_mode))
-        det = DetObject(detname , self.dsIdx.env(), self.run, name=detname, common_mode=common_mode)
+        det = DetObject(detname, self.dsIdx.env(), self.run, name=detname, common_mode=common_mode)
         self.__dict__[detname]=det
         if (detname+'_pedestals') in self.__dict__.keys():
             return detname

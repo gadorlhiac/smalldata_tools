@@ -37,16 +37,16 @@ def DetObject_lcls2(srcName, run, **kwargs):
     #return None
 
 class DetObjectClass_lcls2(object):
-    def __init__(self,det, run, **kwargs):#name=None, common_mode=None, applyMask=0):
-        self.det=det
-        self._detid=det._detid
+    def __init__(self, det, run, **kwargs):#name=None, common_mode=None, applyMask=0):
+        self.det = det
+        self._detid = det._detid
         self._name = kwargs.get('name', self.det._det_name)#srcName)
 
-        self.run=run
+        self.run = run
         self._storeSum = {}
         self.applyMask = kwargs.get('applyMask', 0)
 
-        self.dataAccessTime=0.
+        self.dataAccessTime = 0.
 
     def params_as_dict(self):
         """returns parameters as dictionary to be stored in the hdf5 file (once/file)"""
@@ -163,15 +163,16 @@ class DetObjectClass_lcls2(object):
 
 class CameraObject_lcls2(DetObjectClass_lcls2): 
     def __init__(self, det,run,**kwargs):
-        super(CameraObject_lcls2, self).__init__(det,run, **kwargs)
+        super(CameraObject_lcls2, self).__init__(det, run, **kwargs)
         self._common_mode_list = [0,-1, 30] #none, raw, calib
         self.common_mode = kwargs.get('common_mode', self._common_mode_list[0])
         if self.common_mode is None:
             self.common_mode = self._common_mode_list[0]
         if self.common_mode not in self._common_mode_list and type(self) is CameraObject:
-            print('Common mode %d is not an option for a CameraObject, please choose from: '%self.common_mode, self._common_mode_list)
-        self.pixelsize=[25e-6]
-        self.isGainswitching=False
+            print(f'Common mode {self.common_mode} is not an option for a CameraObject,'\
+                  'please choose from: {self._common_mode_list}')
+        self.pixelsize = [25e-6]
+        self.isGainswitching = False
 
         #try calibconst...
         #detrawid = det.raw._uniqueid
@@ -207,11 +208,12 @@ class CameraObject_lcls2(DetObjectClass_lcls2):
         self._gainSwitching = False
         try:
             self.x, self.y, self.z = det.raw._pixel_coords(do_tilt=True, cframe=0)
+            self.x = self.x.squeeze()
+            self.y = self.y.squeeze()
+            self.z = self.z.squeeze()
         except:
             self.x, self.y, self.z = None, None, None
-        self.x = self.x.squeeze()
-        self.y = self.y.squeeze()
-        self.z = self.z.squeeze()
+        return
 
     def getData(self, evt):
         super(CameraObject_lcls2, self).getData(evt)
